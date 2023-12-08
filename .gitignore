@@ -1,32 +1,142 @@
-# Prerequisites
-*.d
+#include <iostream>
+#include <vector>
+#include <algorithm>
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+class Product {
+public:
+    Product(int id, const std::string& name, double price, int quantity)
+        : id(id), name(name), price(price), quantity(quantity) {}
 
-# Precompiled Headers
-*.gch
-*.pch
+    int getId() const { return id; }
+    std::string getName() const { return name; }
+    double getPrice() const { return price; }
+    int getQuantity() const { return quantity; }
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+    void updateQuantity(int newQuantity) {
+        quantity = newQuantity;
+    }
 
-# Fortran module files
-*.mod
-*.smod
+private:
+    int id;
+    std::string name;
+    double price;
+    int quantity;
+};
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+class Inventory {
+public:
+    void addProduct(const Product& product) {
+        products.push_back(product);
+    }
 
-# Executables
-*.exe
-*.out
-*.app
+    void displayInventory() const {
+        if (products.empty()) {
+            std::cout << "Inventory is empty." << std::endl;
+        } else {
+            std::cout << "========== Inventory ==========" << std::endl;
+            for (const Product& product : products) {
+                std::cout << "ID: " << product.getId() << ", Name: " << product.getName()
+                          << ", Price: $" << product.getPrice() << ", Quantity: " << product.getQuantity() << std::endl;
+            }
+        }
+    }
+
+    Product* findProductById(int productId) {
+        auto it = std::find_if(products.begin(), products.end(), [productId](const Product& p) {
+            return p.getId() == productId;
+        });
+
+        return (it != products.end()) ? &(*it) : nullptr;
+    }
+
+private:
+    std::vector<Product> products;
+};
+
+void displayMenu() {
+    std::cout << "========== Grocery Store Management System ==========" << std::endl;
+    std::cout << "1. Add Product" << std::endl;
+    std::cout << "2. Display Inventory" << std::endl;
+    std::cout << "3. Process Transaction" << std::endl;
+    std::cout << "4. Exit" << std::endl;
+}
+
+void addProduct(Inventory& inventory) {
+    int id;
+    std::string name;
+    double price;
+    int quantity;
+
+    std::cout << "Enter product ID: ";
+    std::cin >> id;
+    std::cout << "Enter product name: ";
+    std::cin.ignore();
+    std::getline(std::cin, name);
+    std::cout << "Enter product price: $";
+    std::cin >> price;
+    std::cout << "Enter product quantity: ";
+    std::cin >> quantity;
+
+    Product product(id, name, price, quantity);
+    inventory.addProduct(product);
+
+    std::cout << "Product added successfully!" << std::endl;
+}
+
+void processTransaction(Inventory& inventory) {
+    int productId, quantity;
+
+    std::cout << "Enter product ID to purchase: ";
+    std::cin >> productId;
+
+    Product* product = inventory.findProductById(productId);
+
+    if (product != nullptr) {
+        inventory.displayInventory();
+
+        std::cout << "Enter the quantity to purchase: ";
+        std::cin >> quantity;
+
+        if (quantity > 0 && quantity <= product->getQuantity()) {
+            double totalPrice = quantity * product->getPrice();
+            std::cout << "Transaction successful. Total price: $" << totalPrice << std::endl;
+
+            // Update inventory
+            product->updateQuantity(product->getQuantity() - quantity);
+        } else {
+            std::cout << "Invalid quantity. Transaction aborted." << std::endl;
+        }
+    } else {
+        std::cout << "Product not found. Transaction aborted." << std::endl;
+    }
+}
+
+int main() {
+    Inventory inventory;
+
+    int choice;
+    do {
+        displayMenu();
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+            case 1:
+                addProduct(inventory);
+                break;
+            case 2:
+                inventory.displayInventory();
+                break;
+            case 3:
+                processTransaction(inventory);
+                break;
+            case 4:
+                std::cout << "Exiting the program. Goodbye!" << std::endl;
+                break;
+            default:
+                std::cout << "Invalid choice. Please try again." << std::endl;
+        }
+    } while (choice != 4);
+
+    return 0;
+}
